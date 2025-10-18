@@ -1,4 +1,4 @@
--- Blox Fruits Script by Assistant
+-- Blox Fruits Script FIXED
 local BloxFruits = {}
 
 -- Servicios
@@ -10,45 +10,28 @@ local Workspace = game:GetService("Workspace")
 
 -- Jugador
 local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
 
 -- Configuración
 local Settings = {
-    -- Auto Farm
     AutoFarm = false,
-    AutoSeaBeasts = false,
-    AutoRaid = false,
-    AutoElite = false,
-    
-    -- Skills
     AutoSkills = false,
     SkillZ = true,
     SkillX = true,
     SkillC = true,
     SkillV = true,
     SkillF = true,
-    
-    -- Player
-    WalkSpeed = 16,
-    JumpPower = 50,
+    WalkSpeed = 50,
+    JumpPower = 100,
     Noclip = false,
-    
-    -- Misc
-    AutoSabi = false,
-    AutoKen = false,
-    AutoClick = false,
-    BringMobs = true
+    BringMobs = true,
+    AutoClick = false
 }
 
--- Conexiones
-local Connections = {}
-
 -- ============================================================================
--- MÓDULO AUTO FARM BLOX FRUITS
+-- MÓDULO AUTO FARM (SIMPLIFICADO)
 -- ============================================================================
 local FarmModule = {
-    Connection = nil,
-    CurrentTarget = nil
+    Connection = nil
 }
 
 function FarmModule:Start()
@@ -62,80 +45,46 @@ function FarmModule:Start()
         local character = Player.Character
         if not character then return end
         
-        local humanoid = character:FindFirstChild("Humanoid")
         local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return end
         
-        if not humanoid or not rootPart or humanoid.Health <= 0 then return end
+        -- Buscar NPC más cercano
+        local target = nil
+        local nearestDistance = math.huge
         
-        -- Buscar NPCs en Blox Fruits
-        local target = self:FindNearestNPC()
+        for _, npc in pairs(Workspace:GetChildren()) do
+            if npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
+                if npc:FindFirstChild("HumanoidRootPart") then
+                    local distance = (rootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+                    if distance < nearestDistance and distance < 200 then
+                        nearestDistance = distance
+                        target = npc
+                    end
+                end
+            end
+        end
+        
         if target then
-            self:TeleportToTarget(target)
-            self:UseSkills()
-            self:ClickAttack()
+            -- Teletransportarse al NPC
+            local targetPos = target.HumanoidRootPart.Position
+            rootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 10, -5))
             
-            if Settings.BringMobs then
-                self:BringNearbyMobs(target)
+            -- Usar habilidades
+            if Settings.AutoSkills then
+                FarmModule:UseSkills()
+            end
+            
+            -- Auto click
+            if Settings.AutoClick then
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                task.wait(0.05)
+                VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
             end
         end
     end)
 end
 
-function FarmModule:FindNearestNPC()
-    local character = Player.Character
-    if not character then return nil end
-    
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return nil end
-    
-    local nearestNPC = nil
-    local nearestDistance = math.huge
-    
-    -- Lugares donde buscar NPCs en Blox Fruits
-    local searchFolders = {
-        Workspace:FindFirstChild("Enemies"),
-        Workspace:FindFirstChild("_ENEMIES"),
-        Workspace:FindFirstChild("NPCs"),
-        Workspace:FindFirstChild("Live")
-    }
-    
-    for _, folder in pairs(searchFolders) do
-        if folder then
-            for _, npc in pairs(folder:GetChildren()) do
-                if npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                    if npc:FindFirstChild("HumanoidRootPart") then
-                        local distance = (rootPart.Position - npc.HumanoidRootPart.Position).Magnitude
-                        if distance < nearestDistance and distance < 500 then
-                            nearestDistance = distance
-                            nearestNPC = npc
-                        end
-                    end
-                end
-            end
-        end
-    end
-    
-    return nearestNPC
-end
-
-function FarmModule:TeleportToTarget(target)
-    local character = Player.Character
-    if not character then return end
-    
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not rootPart then return end
-    
-    local targetPos = target.HumanoidRootPart.Position
-    local farmPosition = targetPos + Vector3.new(0, 10, -5) -- Posición óptima para farmear
-    
-    -- Usar CFrame para teletransporte suave
-    rootPart.CFrame = CFrame.new(farmPosition)
-end
-
 function FarmModule:UseSkills()
-    if not Settings.AutoSkills then return end
-    
-    -- Skills de Blox Fruits (Z, X, C, V, F)
     local skills = {
         {key = Enum.KeyCode.Z, enabled = Settings.SkillZ},
         {key = Enum.KeyCode.X, enabled = Settings.SkillX},
@@ -149,32 +98,6 @@ function FarmModule:UseSkills()
             VirtualInputManager:SendKeyEvent(true, skill.key, false, game)
             task.wait(0.1)
             VirtualInputManager:SendKeyEvent(false, skill.key, false, game)
-            task.wait(0.2)
-        end
-    end
-end
-
-function FarmModule:ClickAttack()
-    if Settings.AutoClick then
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        task.wait(0.05)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-    end
-end
-
-function FarmModule:BringNearbyMobs(target)
-    if not Settings.BringMobs then return end
-    
-    local targetPos = target.HumanoidRootPart.Position
-    
-    for _, npc in pairs(Workspace:GetChildren()) do
-        if npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-            if npc:FindFirstChild("HumanoidRootPart") then
-                local distance = (npc.HumanoidRootPart.Position - targetPos).Magnitude
-                if distance < 300 then
-                    npc.HumanoidRootPart.CFrame = CFrame.new(targetPos)
-                end
-            end
         end
     end
 end
@@ -187,125 +110,11 @@ function FarmModule:Stop()
 end
 
 -- ============================================================================
--- MÓDULO AUTO BOSS/RAID
--- ============================================================================
-local BossModule = {
-    RaidConnection = nil
-}
-
-function BossModule:StartRaid()
-    if self.RaidConnection then
-        self.RaidConnection:Disconnect()
-    end
-    
-    self.RaidConnection = RunService.Heartbeat:Connect(function()
-        if not Settings.AutoRaid then return end
-        
-        -- Buscar jefes de raid
-        local raidBoss = self:FindRaidBoss()
-        if raidBoss then
-            FarmModule:TeleportToTarget(raidBoss)
-            FarmModule:UseSkills()
-        end
-    end)
-end
-
-function BossModule:FindRaidBoss()
-    -- Implementar búsqueda de jefes de raid
-    -- Esto requiere conocimiento específico de Blox Fruits
-    return nil
-end
-
--- ============================================================================
--- MÓDULO PLAYER
--- ============================================================================
-local PlayerModule = {
-    NoclipConnection = nil
-}
-
-function PlayerModule:SetWalkSpeed(speed)
-    local character = Player.Character
-    if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid.WalkSpeed = speed
-    end
-end
-
-function PlayerModule:SetJumpPower(power)
-    local character = Player.Character
-    if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid.JumpPower = power
-    end
-end
-
-function PlayerModule:ToggleNoclip(state)
-    if state then
-        self:StartNoclip()
-    else
-        self:StopNoclip()
-    end
-end
-
-function PlayerModule:StartNoclip()
-    if self.NoclipConnection then
-        self.NoclipConnection:Disconnect()
-    end
-    
-    self.NoclipConnection = RunService.Stepped:Connect(function()
-        if not Settings.Noclip then return end
-        
-        local character = Player.Character
-        if character then
-            for _, part in pairs(character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
-    end)
-end
-
-function PlayerModule:StopNoclip()
-    if self.NoclipConnection then
-        self.NoclipConnection:Disconnect()
-        self.NoclipConnection = nil
-    end
-end
-
--- ============================================================================
--- MÓDULO TELEPORT (ISLAS BLOX FRUITS)
--- ============================================================================
-local TeleportModule = {}
-
-TeleportModule.Locations = {
-    ["Starter Island"] = CFrame.new(100, 50, 100),
-    ["Jungle"] = CFrame.new(-1500, 70, 100),
-    ["Pirate Village"] = CFrame.new(-1100, 70, 3800),
-    ["Desert"] = CFrame.new(1000, 70, 4000),
-    ["Snow Mountain"] = CFrame.new(1200, 200, -1200),
-    ["Marine Fortress"] = CFrame.new(-4800, 330, 2300),
-    ["Sky Island 1"] = CFrame.new(5000, 1500, 500),
-    ["Sky Island 2"] = CFrame.new(3000, 1500, -2000),
-    ["Fountain City"] = CFrame.new(5000, 70, 5000)
-}
-
-function TeleportModule:TeleportTo(locationName)
-    local location = self.Locations[locationName]
-    if location then
-        local character = Player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            character.HumanoidRootPart.CFrame = location
-            print("Teletransportado a: " .. locationName)
-        end
-    end
-end
-
--- ============================================================================
--- INTERFAZ SIMPLE
+-- INTERFAZ CORREGIDA
 -- ============================================================================
 local UIModule = {}
 
 function UIModule:Create()
-    -- Crear interfaz gráfica simple
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "BloxFruitsHub"
     ScreenGui.Parent = game:GetService("CoreGui")
@@ -326,17 +135,31 @@ function UIModule:Create()
     Title.Font = Enum.Font.GothamBold
     Title.Parent = MainFrame
     
-    -- Contenido (scroll frame)
+    -- ScrollFrame CORREGIDO
     local ScrollFrame = Instance.new("ScrollingFrame")
     ScrollFrame.Size = UDim2.new(1, -10, 1, -40)
     ScrollFrame.Position = UDim2.new(0, 5, 0, 35)
     ScrollFrame.BackgroundTransparency = 1
     ScrollFrame.ScrollBarThickness = 3
+    ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 85, 0)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
     ScrollFrame.Parent = MainFrame
+    
+    -- ✅ LAYOUT CORRECTO
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Padding = UDim.new(0, 8)
+    UIListLayout.Parent = ScrollFrame
+    
+    local UIPadding = Instance.new("UIPadding")
+    UIPadding.PaddingLeft = UDim.new(0, 5)
+    UIPadding.PaddingTop = UDim.new(0, 5)
+    UIPadding.Parent = ScrollFrame
     
     return {
         MainFrame = MainFrame,
-        ScrollFrame = ScrollFrame
+        ScrollFrame = ScrollFrame,
+        ScreenGui = ScreenGui
     }
 end
 
@@ -353,6 +176,7 @@ function UIModule:CreateToggle(parent, text, settingKey, callback)
     label.TextColor3 = Color3.white
     label.TextSize = 14
     label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.Gotham
     label.Parent = toggleFrame
     
     local button = Instance.new("TextButton")
@@ -362,6 +186,7 @@ function UIModule:CreateToggle(parent, text, settingKey, callback)
     button.Text = "OFF"
     button.TextColor3 = Color3.white
     button.TextSize = 12
+    button.Font = Enum.Font.Gotham
     button.Parent = toggleFrame
     
     local function UpdateToggle()
@@ -388,11 +213,10 @@ end
 -- INICIALIZACIÓN
 -- ============================================================================
 function BloxFruits:Init()
-    -- Crear interfaz
     local UI = UIModule:Create()
     local scrollFrame = UI.ScrollFrame
     
-    -- Auto Farm Section
+    -- Auto Farm
     UIModule:CreateToggle(scrollFrame, "Auto Farm", "AutoFarm", function(state)
         Settings.AutoFarm = state
         if state then
@@ -406,14 +230,8 @@ function BloxFruits:Init()
         Settings.AutoSkills = state
     end)
     
-    UIModule:CreateToggle(scrollFrame, "Bring Mobs", "BringMobs", function(state)
-        Settings.BringMobs = state
-    end)
-    
-    -- Player Settings
     UIModule:CreateToggle(scrollFrame, "Noclip", "Noclip", function(state)
         Settings.Noclip = state
-        PlayerModule:ToggleNoclip(state)
     end)
     
     -- Skills
@@ -437,26 +255,17 @@ function BloxFruits:Init()
         Settings.SkillF = state
     end)
     
-    -- Configurar controles
+    -- Controles
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
-        
         if input.KeyCode == Enum.KeyCode.RightShift then
             UI.MainFrame.Visible = not UI.MainFrame.Visible
         end
     end)
     
-    -- Aplicar configuraciones iniciales
-    PlayerModule:SetWalkSpeed(Settings.WalkSpeed)
-    PlayerModule:SetJumpPower(Settings.JumpPower)
-    
-    print("🍊 Blox Fruits Hub Cargado!")
-    print("🎮 Presiona RIGHT SHIFT para abrir/cerrar el menú")
-    print("⚔️ Auto Farm listo")
-    print("👤 Player hacks activos")
+    print("✅ Blox Fruits Hub CARGADO!")
+    print("🎮 Presiona RIGHT SHIFT para abrir/cerrar menú")
 end
 
--- Iniciar automáticamente
+-- Iniciar
 BloxFruits:Init()
-
-return BloxFruits
