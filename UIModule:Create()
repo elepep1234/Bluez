@@ -1,0 +1,48 @@
+function UIModule:Create()
+    -- Crear interfaz gráfica simple
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "BloxFruitsHub"
+    ScreenGui.Parent = game:GetService("CoreGui")
+    
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 350, 0, 400)
+    MainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    MainFrame.Parent = ScreenGui
+    
+    -- Título
+    local Title = Instance.new("TextLabel")
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.BackgroundColor3 = Color3.fromRGB(255, 85, 0)
+    Title.Text = "🍊 BLOX FRUITS HUB"
+    Title.TextColor3 = Color3.white
+    Title.TextSize = 16
+    Title.Font = Enum.Font.GothamBold
+    Title.Parent = MainFrame
+    
+    -- Contenido (scroll frame) - PARTE CORREGIDA
+    local ScrollFrame = Instance.new("ScrollingFrame")
+    ScrollFrame.Size = UDim2.new(1, -10, 1, -40)
+    ScrollFrame.Position = UDim2.new(0, 5, 0, 35)
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.ScrollBarThickness = 3
+    ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(255, 85, 0)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y  -- ¡IMPORTANTE!
+    ScrollFrame.Parent = MainFrame
+    
+    -- ✅ AGREGA ESTAS 2 LÍNEAS:
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Padding = UDim.new(0, 5)
+    UIListLayout.Parent = ScrollFrame
+    
+    local UIPadding = Instance.new("UIPadding")
+    UIPadding.PaddingLeft = UDim.new(0, 5)
+    UIPadding.PaddingTop = UDim.new(0, 5)
+    UIPadding.Parent = ScrollFrame
+    
+    return {
+        MainFrame = MainFrame,
+        ScrollFrame = ScrollFrame
+    }
+end
